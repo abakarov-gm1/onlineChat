@@ -1,6 +1,7 @@
 import logging
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from routes.auth import router as auth
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from models.createUserModel import User
+from routes.auth import router as auth, get_user_from_token
 from services.user_service import create_user, get_users
 
 # Настройка логирования
@@ -15,15 +16,9 @@ active_connections = []
 app.include_router(auth, prefix="/auth", tags=["auth"])
 
 
-@app.get("/get-users")
-def create():
+@app.get("/protected")
+def create(c: User = Depends(get_user_from_token)):
     return get_users()
-
-
-@app.get("/create-user")
-def create():
-    create_user("Gadjimurad", 23)
-    return "Success"
 
 
 @app.websocket("/ws")

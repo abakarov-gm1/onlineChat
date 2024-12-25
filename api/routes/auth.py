@@ -1,10 +1,13 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from services.user_service import create_user, get_user_by_name
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
+from fastapi.security import OAuth2PasswordBearer
+
+from models.createUserModel import User
 
 router = APIRouter()
 
@@ -15,6 +18,30 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Инициализируем CryptContext для работы с bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+
+# Функция для декодирования JWT и получения данных пользователя
+def get_user_from_token(token: str = Depends(oauth2_scheme)) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    # Возвращаем пользователя из базы по имени
+    user = get_user_by_name(username)
+    if user is None:
+        raise credentials_exception
+    return user
 
 
 class UserRegisterData(BaseModel):
@@ -66,3 +93,5 @@ def login(data: UserLoginData):
     access_token = create_access_token(data={"sub": user.name})
     return {"token": access_token}
 
+
+# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYmR1bCIsImV4cCI6MTczNTA4NzcxNn0.UFoEwOkyJfx5GOJrPdo1MR3yWHcgBNXkmHdS0DUvnsE
