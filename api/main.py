@@ -3,12 +3,27 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from models.createUserModel import User
 from routes.auth import router as auth, get_user_from_token
 from services.user_service import create_user, get_users
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+origins = [
+    "http://client.abakarov/*",
+    "http://client.abakarov",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Разрешаем запросы с этих доменов
+    allow_credentials=True,
+    allow_methods=["*"],  # Разрешаем все HTTP-методы
+    allow_headers=["*"],  # Разрешаем все заголовки
+)
+
 
 # Список активных подключений
 active_connections = []
@@ -18,6 +33,11 @@ app.include_router(auth, prefix="/auth", tags=["auth"])
 
 @app.get("/protected")
 def create(c: User = Depends(get_user_from_token)):
+    return get_users()
+
+
+@app.get("/test")
+def test():
     return get_users()
 
 

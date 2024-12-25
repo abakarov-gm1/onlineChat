@@ -2,14 +2,60 @@ version: "3"
 
 services:
 
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.http.address=:80"
+    ports:
+      - "8080:8080"  # Порт для панели управления Traefik
+      - "80:80"  # Порт для HTTP трафика
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - dev
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dev"
+
   api:
+    build:
+      context: ./api/docker/nginx/
+      dockerfile: Dockerfile
+    volumes:
+      - ./api:/app
+    networks:
+      - dev
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.abakarov`)"
+      - "traefik.http.services.api.loadbalancer.server.port=80"
+      - "traefik.docker.network=dev"
+      - "traefik.http.routers.api.entryPoints=http"
+
+
+  client:
+    build:
+      context: ./client/docker/nginx/
+      dockerfile: Dockerfile
+    volumes:
+      - ./api:/app
+    networks:
+      - dev
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client.rule=Host(`client.abakarov`)"
+      - "traefik.http.services.client.loadbalancer.server.port=80"
+      - "traefik.docker.network=dev"
+      - "traefik.http.routers.client.entryPoints=http"
+
+  api-fast:
     build:
       context: api
       dockerfile: ./docker/dev/Dockerfile
     volumes:
       - ./api:/app
-    ports:
-      - "8081:8000"
     networks:
        - dev
 
@@ -19,8 +65,6 @@ services:
       dockerfile: docker/dev/Dockerfile
     volumes:
       - ./client:/app
-    ports:
-      - "8082:3000"
     networks:
       - dev
 

@@ -93,5 +93,3 @@ def login(data: UserLoginData):
     access_token = create_access_token(data={"sub": user.name})
     return {"token": access_token}
 
-
-# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYmR1bCIsImV4cCI6MTczNTA4NzcxNn0.UFoEwOkyJfx5GOJrPdo1MR3yWHcgBNXkmHdS0DUvnsE
