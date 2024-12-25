@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+
+  api:
+    build:
+      context: api
+      dockerfile: ./docker/dev/Dockerfile
+    volumes:
+      - ./api:/app
+    ports:
+      - "8081:8000"
+    networks:
+       - dev
+
+  client-node:
+    build:
+      context: ./client
+      dockerfile: docker/dev/Dockerfile
+    volumes:
+      - ./client:/app
+    ports:
+      - "8082:3000"
+    networks:
+      - dev
+
+  db:
+    image: postgres:14.1-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: app
+    volumes:
+      - dbVolume:/var/lib/postgresql/data
+    networks:
+      - dev
+    ports:
+      - "5432:5432"
+
+
+networks:
+  dev:
+
+volumes:
+  uploads:
+  dbVolume:
+    driver: local
