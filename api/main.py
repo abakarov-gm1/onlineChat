@@ -1,5 +1,7 @@
 import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+
+from services.message_service import create_message_service, get_messages
 from models.createUserModel import User
 from routes.auth import router as auth, get_user_from_token
 from services.user_service import create_user, get_users
@@ -27,6 +29,7 @@ app.add_middleware(
 
 # Список активных подключений
 active_connections = []
+user_connection = {}
 
 app.include_router(auth, prefix="/auth", tags=["auth"])
 
@@ -41,24 +44,36 @@ def test():
     return get_users()
 
 
+@app.get("/message")
+def get_mess():
+    return get_messages()
+
+
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str, id_: int):
+
+    user = get_user_from_token(token)
+
     await websocket.accept()
     active_connections.append(websocket)  # Добавляем объект WebSocket
-    logger.info(f"New connection: {websocket.client.host}")
+
+    user_connection[user.id] = websocket
+    logger.info(f"Zt {user_connection}")
 
     try:
         while True:
-            # Ожидаем сообщения от клиента
             message = await websocket.receive_text()
-            logger.info(f"Message from {websocket.client.host}: {message}")
 
-            # Рассылаем сообщение всем остальным подключенным
-            for connection in active_connections:
-                await connection.send_text(f"Message from {websocket.client.host}: {message}")
+            # for connection in active_connections:
+            #     await connection.send_text(f"Сообщение отпраил: {user.name}: {message}")
+
+            for k, v in user_connection.items():
+                logger.info(f"KEYSSSS {k}{id_}")
+                if id_ == k:
+                    await v.send_text(f"Это сообшение было отпралено лично {message}")
+                    create_message_service(user.id, id_, message=message)
 
     except WebSocketDisconnect:
-        # Обрабатываем отключение клиента
         active_connections.remove(websocket)
         logger.warning(f"Client {websocket.client.host} disconnected")
         logger.info(f"Active connections: {[conn.client.host for conn in active_connections]}")
