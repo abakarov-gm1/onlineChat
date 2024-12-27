@@ -1,7 +1,8 @@
+import json
 import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 
-from services.message_service import create_message_service, get_messages
+from services.message_service import create_message_service, get_messages, get_expanded
 from models.createUserModel import User
 from routes.auth import router as auth, get_user_from_token
 from services.user_service import create_user, get_users
@@ -34,44 +35,44 @@ user_connection = {}
 app.include_router(auth, prefix="/auth", tags=["auth"])
 
 
-@app.get("/protected")
-def create(c: User = Depends(get_user_from_token)):
+@app.get("/users")
+def users():
     return get_users()
 
 
-@app.get("/test")
-def test():
-    return get_users()
-
-
-@app.get("/message")
+@app.get("/messages")
 def get_mess():
-    return get_messages()
+    return get_expanded()
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str, id_: int):
+async def websocket_endpoint(websocket: WebSocket, token: str):
 
     user = get_user_from_token(token)
-
     await websocket.accept()
     active_connections.append(websocket)  # Добавляем объект WebSocket
-
     user_connection[user.id] = websocket
-    logger.info(f"Zt {user_connection}")
 
     try:
         while True:
             message = await websocket.receive_text()
 
-            # for connection in active_connections:
-            #     await connection.send_text(f"Сообщение отпраил: {user.name}: {message}")
+            create_message_service(user.id, 1, message)
 
-            for k, v in user_connection.items():
-                logger.info(f"KEYSSSS {k}{id_}")
-                if id_ == k:
-                    await v.send_text(f"Это сообшение было отпралено лично {message}")
-                    create_message_service(user.id, id_, message=message)
+            message_data = {
+                "sender": user.name,  # Имя пользователя
+                "message": message,
+            }
+            message_json = json.dumps(message_data)
+
+            for connection in active_connections:
+                await connection.send_text(message_json)
+
+            # for k, v in user_connection.items():
+            #     if id_ != k:
+            #         await v.send_text(f"{message}")
+            #         logger.info(f"{user.id}|--|{id_}|--|{message}")
+            #         create_message_service(user.id, id_, message=message)
 
     except WebSocketDisconnect:
         active_connections.remove(websocket)

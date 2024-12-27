@@ -17,7 +17,6 @@ const AuthForm = () => {
   function submit(e) {
     // Останавливаем перезагрузку страницы при сабмите формы
     e.preventDefault();
-
     if (isLogin) {
       // В случае входа, передаем name и password
       login(name, password);
@@ -25,6 +24,8 @@ const AuthForm = () => {
       // В случае регистрации, передаем name, age и password
       register(name, age, password);
     }
+    reset()
+
   }
 
   return (
