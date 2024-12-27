@@ -1,4 +1,4 @@
-version: "3"
+version: "3.9"
 
 services:
 
@@ -20,11 +20,9 @@ services:
       - "traefik.docker.network=dev"
 
   api:
-    build:
-      context: ./api/docker/nginx/
-      dockerfile: Dockerfile
+    image: gadji1/online-chat:api-0.0.1
     volumes:
-      - ./api:/app
+      - uploads:/app/storage/app/public
     networks:
       - dev
     labels:
@@ -34,13 +32,8 @@ services:
       - "traefik.docker.network=dev"
       - "traefik.http.routers.api.entryPoints=http"
 
-
-  client:
-    build:
-      context: ./client/docker/nginx/
-      dockerfile: Dockerfile
-    volumes:
-      - ./api:/app
+  panel:
+    image: gadji1/online-chat:client-0.0.1
     networks:
       - dev
     labels:
@@ -51,20 +44,9 @@ services:
       - "traefik.http.routers.client.entryPoints=http"
 
   api-fast:
-    build:
-      context: api
-      dockerfile: ./docker/dev/Dockerfile
+    image: gadji1/online-chat:api-fast-0.0.1
     volumes:
-      - ./api:/app
-    networks:
-       - dev
-
-  client-node:
-    build:
-      context: ./client
-      dockerfile: docker/dev/Dockerfile
-    volumes:
-      - ./client:/app
+      - uploads:/app/storage/app/public
     networks:
       - dev
 
@@ -81,11 +63,12 @@ services:
     ports:
       - "5432:5432"
 
-
 networks:
   dev:
+    name: dev
 
 volumes:
   uploads:
   dbVolume:
     driver: local
+  letsencrypt:  # Хранилище для сертификатов Let's Encrypt

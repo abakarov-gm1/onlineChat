@@ -2,5 +2,4 @@ FROM nginx
 
 WORKDIR /app
 
-COPY ./conf.d /etc/nginx/conf.d
-
+COPY ./docker/nginx/conf.d /etc/nginx/conf.d

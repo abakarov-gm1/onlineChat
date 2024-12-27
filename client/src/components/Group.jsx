@@ -17,7 +17,7 @@ const Home = () => {
 
   useEffect(() => {
     const fetchMessages = async () => {
-      const response = await fetch('http://api.abakarov/messages');
+      const response = await fetch('http://api.abakarov.store/messages');
       const data = await response.json();
       setMessages(data);
     };

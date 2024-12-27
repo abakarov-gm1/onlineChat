@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 origins = [
-    "http://client.abakarov/*",
-    "http://client.abakarov",
+    "http://panel.abakarov.store/*",
+    "http://panel.abakarov.store",
 ]
 app.add_middleware(
     CORSMiddleware,
